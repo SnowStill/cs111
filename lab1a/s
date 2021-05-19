@@ -1,0 +1,40 @@
+... using test directory /u/cs/ugrad/qinglin/cs111/lab1a/CS111_test.qinglin
+... extracting /u/cs/ugrad/qinglin/cs111/lab1a/lab1a-205356739.tar.gz
+lab1a.c
+README
+Makefile
+... checking for README file
+... checking for submitter ID in README
+... checking for submitter email in README
+... checking for submitter name in README
+... checking slip-day use in README
+    no SLIPDAYS: entry
+... checking for other expected files
+... checking for other files of expected types
+... checking for required Make targets
+... checking for required compillation options
+... building default target(s)
+gcc -g -Wall -Wextra lab1a.c -o lab1a
+... checking make dist
+tar -cvzf lab1a-205356739.tar.gz lab1a.c README Makefile
+lab1a.c
+README
+Makefile
+ ... checking make clean
+rm -f lab1a lab1a-205356739.tar.gz
+    restored to freshly untar-ed state ... OK
+... redo default make
+gcc -g -Wall -Wextra lab1a.c -o lab1a
+... checking for expected products
+... ./lab1a detects/reports bogus arguments
+        ./lab1a: unrecognized option '--bogus'
+Arguments Error: --shell
+-rwxr-xr-x 1 qinglin csugrad 23384 Apr 19 00:55 pty_test
+
+... confiriming disable of ICANON
+... confirming disable of ECHO
+... checking mode restoration on exit
+... confirming character at a time echo
+... confirming batch character echo and processing
+... confirming cr->crlf translation
+... confirming basic shell input/output

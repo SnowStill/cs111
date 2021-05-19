@@ -1,0 +1,35 @@
+NAME: Qinglin Zhang
+EMAIL: qqinglin0327@gmail.com
+ID: 205356739
+
+
+
+lab1a.c:
+the c source code for this project. It basically does the non-canonical input. 
+It reads the input from keyboard and display back to the window. It looks like the usual process, but this time we did it by using system calls and witout echo mode.
+--shell-filename:
+this option will transfer the input from the keyboard to the shell while it displays on the screen at the same time by using fork. It creates an extra process and excute
+a shell script. If I run ./lab1a --shell=sh, it will asks me to input command to excute; on the otherhand, if i run ./lab1a --shell=ls, it will output the ls and quit the
+program. 
+
+Makefile
+deafult: it compiles the program to be excutable
+clean: clean the tar file and compiled file.
+dist:makes the tar file incluse:Makefile README lab1a.c
+
+Test:
+./lab1a --shell=sh
+after runniong the program, I have tried the following commands:
+ls
+echo sssss
+rm file
+mkdir 
+
+I also ran the program without the option to make sure it does what I want.
+
+Resources:http://man7.org/linux/man-pages/man2/waitid.2.html
+http://man7.org/linux/man-pages/man2/poll.2.html
+https://www.geeksforgeeks.org/exec-family-of-functions-in-c/
+https://www.geeksforgeeks.org/fork-system-call/
+https://stackoverflow.com/questions/2483041/what-is-the-difference-between-fork-and-thread
+https://www.tutorialspoint.com/process-vs-parent-process-vs-child-process

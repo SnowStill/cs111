@@ -1,0 +1,37 @@
+NAME: Qinglin Zhang
+EMAIL: qqinglin0327@gmail.com
+ID: 205356739
+
+lab0.c:
+The C file that is used to compile the excutable file.
+It copies its standard input to its standard output, but it will read from file descriptor 0 and write to file descriptor 1 with the read() and write() functions if we use the options 
+--input and --output. Option --segfault will force a segmentation fault. --catch will register a handler to catch the segmentation fault.
+
+Makefile:
+deafult: builds an executable file.
+
+check:
+The smoke chaeck has the following indivisual checks:
+
+GeneralIOtest: This test simply runs with defined --input and --output options to see if it exits with the code 0.
+SegCatchtest: This test simply runs with defined --segfault and --catch options to see if it exits with the code 4 by catching the segment fault with defined handler.
+
+Standardtest: Test the standard input and output. Using the echo command and pipeline to the excute command ./lab0 to see if it exits normally with code 0.
+
+Argtest: Test with the wrong argument, and check if exits with code 1: unrecognized argument
+
+inputtest: Test with a file that does not exist and check if the program exits with code 2.
+
+Permissiontest: Test with a file that we do not have the permission to write, read, and excute for the output file. The program should exit with code 3.
+
+
+clean:remove all files made by Makefile: lab0-205356739.tar.gz lab0 input.txt output.txt
+
+dist: create a tarball containing lab0.c Makefile, backtrace.png, breakpoint.png, and this README 
+
+Reference:
+https://stackoverflow.com/questions/9967105/suppress-echo-of-command-invocation-in-makefile For hiding the commands for the makefile from the console.
+http://man7.org/linux/man-pages/man3/getopt.3.html Look up the arguments for getopt and how to build a arguments list
+http://www.cplusplus.com/reference/cstring/strerror/ Look up stringerror and error number in order to tell what type of error is given.
+https://stackoverflow.com/questions/26675681/how-to-check-the-exit-status-using-an-if-statement the exist status for makefile
+https://stackoverflow.com/questions/10121182/multiline-bash-commands-in-makefile Other informations for the makefile

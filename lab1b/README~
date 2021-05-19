@@ -1,0 +1,17 @@
+NAME: Qinglin Zhang
+EMAIL:qqinglin0327@gmail.com
+ID: 205356739
+
+
+lab1b-client.c: the C source file for the client. It provides the --port, --compress and the --log options.
+--port requires users to provide the port#, it is mandatory.
+--log is used to record the bytes sent and received.
+--compress option to compress and decompress the bytes sent and received.
+
+lab1b-server.c: the C source file for the server. It provide the --port and  --compress. It supports --shell option from the previous example.
+
+Makefile: Compiles the programs and tar the following files:lab1b-client.c lab1b-server.c README Makefile
+
+
+Resource:https://stackoverflow.com/questions/8257714/how-to-convert-an-int-to-string-in-c
+https://www.tutorialspoint.com/unix_sockets/socket_client_example.htm

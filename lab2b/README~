@@ -1,0 +1,35 @@
+# NAME: Qinglin Zhang
+# EMAIL: qqinglin0327@gmail.com
+# ID:205356739
+
+QUESTION 2.3.1 - CPU time in the basic list implementation
+-I believe most of the CPU time is spent in the listing operation since there are only 1-2 threads. Locks shoudn't be a big isssue
+-If there's only one thread, the lock issue does not even exist. Even if there are two threads, it is still lesss likely to happan, so the processes won't wait for a long time.
+-If it is in high-thread spin lock tests, most of the time must has been consumed by waiting.
+-I think the most time still goes to the list operating, since the thread that could not access the resource could just sleep and not wasting processes.
+QUESTION 2.3.2 - Execution Profiling:
+
+QUESTION 2.3.3 - Mutex Wait Time:
+
+QUESTION 2.3.4 - Performance of Partitioned Lists
+
+SortedList.h: a header file for the linked list
+SortedList.c: the source file for the linked list
+lab2_list.c: the source file for this project which uses the specified command line options (--threads, --iterations, --yield, --sync, --lists) to insert, lookup, and delete the 
+elements of the lists from multiple threads.
+Makefile: using to build the deliverable programs, output, graphs, and tarball
+lab2b_list.csv: an output file for the result of test runs.
+profile.out:a report shows the time spending in spin-lock
+lab2b_1.png:throughput vs. number of threads with mutex and spin-lock
+lab2b_2.png:time per mutex wait and the time per mutexed operations
+lab2b_3.png:successful runs vs the number of threads for synchronization method
+lab2b_4.png:A graph shows the relation between throughput and number of threads for mutex synchronized partitioned lists.
+lab2b_5.png:A graph shows the relation between throughput and number of threads for spin-lock-synchronized partitioned lists.
+README:a readme file that answers the question
+lab2_list.gp:script to plot the graphs.
+
+
+
+Reference:
+https://www.geeksforgeeks.org/what-are-hash-functions-and-how-to-choose-a-good-hash-function/ Hash
+https://piazza.com/class/kbpjf32wbol4kc?cid=246 pprof

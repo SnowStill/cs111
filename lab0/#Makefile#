@@ -1,0 +1,21 @@
+#NAME:Qinglin Zhang
+#EMAAIL:qqinglin0327@gmail.com
+#ID:205356739
+
+
+default: 
+	gcc -g -Wall -Wextra lab0.c -o lab0
+
+check:default IOtest
+	echo "Check success."; \
+
+clean:
+	rm -f lab0-205356739.tar.gz lab0
+dist:default
+	tar -cvzf lab0-205356739.tar.gz lab0.c README
+
+IOtest:
+	exit="dd"; \
+	echo "Hello World" > input.txt; \
+	./lab0 --input=input.txt --output=output.txt; 
+	echo "$$exit";

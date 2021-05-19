@@ -1,0 +1,11 @@
+NAME: Qnglin Zhang
+EMAIL: qqinglin0327@gmail.com
+ID: 205356739
+
+lab3.py: the python script that reads and analyze the file system from the summary in a csv file
+Makefile: it builds and tars necessary files, and cleans temprary files
+README:a reaad me file
+
+REFRENCE
+https://www.geeksforgeeks.org/python-ways-to-create-a-dictionary-of-lists/ dictionary
+https://stackoverflow.com/questions/12020872/array-of-arrays-python-numpy arrays of array

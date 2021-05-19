@@ -1,0 +1,18 @@
+NAME: Qinglin Zhang
+EMAIL: qqinglin0327@gmail.com
+ID:205356739
+
+lab4b.c:
+    The source code that prints the time and temperature of the beaglebone based on the given period. User is able to use option --scale to change the unit of temperature.
+If log option is specifeid, it will record the result to the given file. It takes following commands: 
+   SCALE=F-change the temperature unit to Fahrenheit
+   SCALE=C-change the tm
+   PERIOD=seconds
+   STOP
+   START
+   LOG line of text
+   OFF
+README: Contains a description of the files included in the project
+
+tests.sh:
+    Contains smoke tests

@@ -1,0 +1,76 @@
+#NAME:Qinglin Zhang
+#EMAAIL:qqinglin0327@gmail.com
+#ID:205356739
+
+
+#https://stackoverflow.com/questions/9967105/suppress-echo-of-command-invocation-in-makefile
+
+default: 
+	@gcc -g -Wall -Wextra lab0.c -o lab0
+
+check:default GeneralIOtest SegCatchtest Standardtest Argtest Inputtest Permissiontest
+	@echo "All checks have been finished."; \
+
+clean:
+	rm -f lab0-205356739.tar.gz lab0 input.txt output.txt
+dist:default
+	tar -cvzf lab0-205356739.tar.gz lab0.c README
+
+GeneralIOtest:
+	@echo "Running IOtest...";
+	@echo "Hello World" > input.txt;
+	@./lab0 --input=input.txt --output=output.txt &> /dev/null; \
+	if [ $$? -eq 0 ]; then \
+	echo "Correct Exit code: 0 for IOtest."; \
+	else \
+	echo "Wrong Exit code is recieved for IOtest."; \
+	fi;
+	@echo ""
+SegCatchtest:
+	@echo "Running SegCatchtest..";
+	@./lab0 --segfault --catch &> /dev/null;\
+	if [ $$? -eq 4 ]; then \
+	echo "Correct Exit code: 4 for SegCatchtest."; \
+	else \
+	echo "Wrong Exit code is recieved for SegCatchtest."; \
+	fi;
+	@echo ""
+Standardtest:
+	@echo "Running Standardtest...";
+	@echo "Hello world from the standard input." | ./lab0; \
+	if [ $$? -eq 0 ]; then \
+	echo "Correct Exit code: 0 for standardtest"; \
+        else \
+        echo "Standard inuput failed, wrong exit code has been recieved"; \
+        fi;
+	@echo ""
+Argtest:
+	@echo "Running Argtest...";
+	@./lab0 -o &> /dev/null; \
+	if [ $$? -eq 1 ]; then \
+	echo "Correct Exit code: 1 for Argtest."; \
+	else \
+	echo "Wrong Exit code is recieved for Argtest."; \
+	fi;
+	@echo ""
+Inputtest:
+	@echo "Running inputtest...";
+	@./lab0 --input=sdggfsdasgasgasas --output=output.txt &> /dev/null; \
+	if [ $$? -eq 2 ]; then \
+	echo "Correct Exit code: 2 for Inputtest."; \
+	else \
+	echo "Wrong Exit code is recieved for Inputtest."; \
+	fi;
+	@echo ""
+Permissiontest:
+	@echo "Running Permissiontest...";
+	@touch output.txt;
+	@chmod 000 output.txt;
+	@./lab0 --input=input.txt --output=output.txt &> /dev/null; \
+	if [ $$? -eq 3 ]; then \
+	echo "Correct Exit code: 3 for Permissiontest."; \
+	else \
+	echo "Wrong Exit code is recieved for Permissiontest."; \
+	fi;
+	@chmod 777 output.txt;
+	@echo ""

@@ -1,0 +1,21 @@
+NAME: Qinglin Zhang
+EMAIL:qqinglin0327@gmail.com
+ID: 205356739
+
+
+lab1b-client.c: the C source file for the client. It provides the --port, --compress and the --log options.
+--port requires users to provide the port#, it is mandatory.
+--log is used to record the bytes sent and received.
+--compress option to compress and decompress the bytes sent and received.
+
+lab1b-server.c: the C source file for the server. It provide the --port and  --compress. It supports --shell option from the previous example.
+
+Makefile: Compiles the programs and tar the following files:lab1b-client.c lab1b-server.c README Makefile
+
+
+Resource:https://stackoverflow.com/questions/8257714/how-to-convert-an-int-to-string-in-c(string convert)
+https://www.tutorialspoint.com/unix_sockets/socket_client_example.htm(socket ref)
+https://unix.stackexchange.com/questions/281061/how-do-i-run-multiple-commands-together-in-the-background(to tun in background)
+https://stackoverflow.com/questions/15319267/read-from-socket-freeze(socket freese issue)
+https://stackoverflow.com/questions/15198834/bind-failed-address-already-in-use/15198906(bind issue)
+https://askubuntu.com/questions/201303/what-is-a-defunct-process-and-why-doesnt-it-get-killed(kill defunct process)

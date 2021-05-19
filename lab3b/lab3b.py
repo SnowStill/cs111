@@ -1,0 +1,250 @@
+#!/usr/bin/env python3
+# NAME: Qinglin Zhang
+# EMAIL: qqinglin0327@gmail.com
+# ID: 205356739
+
+import sys,csv
+
+exitcode = 0
+
+class Superblock:
+    def __init__(self, field):
+        self.total_blocks = int(field[1])
+        self.total_inodes = int(field[2])
+        self.block_size = int(field[3])
+        self.inode_size = int(field[4])
+        self.blocks_per_group = int(field[5])
+        self.inodes_per_group = int(field[6])
+        self.first_nonreserved_inode = int(field[7])
+
+class Group:
+    def __init__(self, field):
+        self.group_num = int(field[1])
+        self.total_blocks = int(field[2])
+        self.total_inodes = int(field[3])
+        self.num_free_blocks = int(field[4])
+        self.num_free_inodes = int(field[5])
+        self.fbitmap = int(field[6])
+        self.ibitmap = int(field[7])
+        self.first_block = int(field[8])
+
+class Inode:
+    def __init__(self, field):
+        self.inode_num = int(field[1])
+        self.file_type = (field[2])
+        self.mode = field[3]
+        self.owner = int(field[4])
+        self.group = int(field[5])
+        self.link_count = int(field[6])
+        self.change_time = field[7]
+        self.mod_time = field[8]
+        self.access_time = field[9]
+        self.file_size = int(field[10])
+        self.num_block = int(field[11])
+        self.blocks_list = []
+        if field[2] != 's':
+            for i in range(12, 24):
+                self.blocks_list.append(int(field[i]))
+        self.inblocks_list = []
+        if field[2] != 's':
+            for i in range(24, 27):
+                self.inblocks_list.append(int(field[i]))
+
+class Dirent:
+    def __init__(self, field):
+        self.parent_inode_num = int(field[1])
+        self.offset = int(field[2])
+        self.inode_num = int(field[3])
+        self.entry_length = int(field[4])
+        self.name_length = int(field[5])
+        self.name = str(field[6])
+
+class Indirect:
+    def __init__(self, field):
+        self.inode_num = int(field[1])
+        self.level = int(field[2])
+        self.offset = int(field[3])
+        self.block_num = int(field[4])
+        self.ref_block_num = int(field[5])
+
+def Block_Consistency_Audits(super_block, group, inode_list, indirect_list,bfree_list, used_blocks):
+    # scan inodes
+    max_block = super_block.total_blocks
+    first_valid_block = int(group.first_block + super_block.inode_size * group.total_inodes / super_block.block_size)
+    for inode in inode_list:
+        if inode.file_type == 's' and inode.file_size <= 60:
+            continue
+        offset = 0
+        for block in inode.blocks_list:
+            if block != 0:
+                if block < 0 or block >= max_block:
+                    print("INVALID BLOCK {} IN INODE {} AT OFFSET {}".format(block, inode.inode_num, offset), file=sys.stdout)
+                    exitcode = 2
+                elif block < first_valid_block:
+                    print("RESERVED BLOCK {} IN INODE {} AT OFFSET {}".format(block, inode.inode_num, offset), file=sys.stdout)   
+                    exitcode = 2
+                else:
+                    if block in used_blocks:
+                        used_blocks[block].append([inode.inode_num,offset,0])
+                    else:
+                        used_blocks[block]=[[inode.inode_num,offset,0]]
+                
+            offset += 1
+
+        #indirect
+        for i in range(len(inode.inblocks_list)):
+            level = i+1
+            undir_level = None
+            offset = 0
+            if level == 1:
+                undir_level = "INDIRECT"
+                offset = 12
+            elif level == 2:
+                undir_level = "DOUBLE INDIRECT"
+                offset = 12 + 256
+            elif level == 3:
+                undir_level = "TRIPLE INDIRECT"
+                offset = 12 + 256 + 256*256
+            if inode.inblocks_list[i] != 0:
+                if inode.inblocks_list[i] < 0 or inode.inblocks_list[i] >= max_block:
+                    print("INVALID {} BLOCK {} IN INODE {} AT OFFSET {}".format(undir_level, inode.inblocks_list[i], inode.inode_num, offset), file=sys.stdout)
+                    exitcode = 2
+                if inode.inblocks_list[i] > 0 and inode.inblocks_list[i] < first_valid_block:
+                    print("RESERVED {} BLOCK {} IN INODE {} AT OFFSET {}".format(undir_level, inode.inblocks_list[i], inode.inode_num, offset), file=sys.stdout)
+                    exitcode = 2
+                else:
+                    if inode.inblocks_list[i] in used_blocks:
+                        used_blocks[inode.inblocks_list[i]].append([inode.inode_num,offset,level])
+                    else:
+                        used_blocks[inode.inblocks_list[i]]=[[inode.inode_num,offset,level]]
+    #indirect list
+    for indirect in indirect_list:
+        undir_level = None
+        if indirect.level == 1:
+            undir_level = "INDIRECT"
+        elif indirect.level == 2:
+            undir_level = "DOUBLE INDIRECT"
+        elif indirect.level == 3:
+            undir_level = "TRIPLE INDIRECT"
+        if indirect.ref_block_num != 0:
+            if indirect.ref_block_num < 0 or indirect.ref_block_num >= max_block:
+                print("INVALID {} BLOCK {} IN INODE {} AT OFFSET {}".format(undir_level, indirect.ref_block_num, indirect.inode_num, indirect.offset), file=sys.stdout)
+                exitcode = 2
+            if indirect.ref_block_num > 0 and indirect.ref_block_num < first_valid_block:
+                print("RESERVED {} BLOCK {} IN INODE {} AT OFFSET {}".format(undir_level, indirect.ref_block_num, indirect.inode_num, indirect.offset), file=sys.stdout)
+                exitcode = 2
+            else:
+                if indirect.ref_block_num in used_blocks:
+                    used_blocks[indirect.ref_block_num].append([indirect.inode_num,indirect.offset,indirect.level])
+                else:
+                    used_blocks[indirect.ref_block_num]=[[indirect.inode_num,indirect.offset,indirect.level]]
+    #ALLOCATED/UNREFERENCED
+    for blocknum in range(first_valid_block, max_block):
+        if blocknum not in  bfree_list and blocknum not in used_blocks:
+            print("UNREFERENCED BLOCK {}".format(blocknum),file=sys.stdout)
+            exitcode = 2
+        if blocknum in bfree_list and blocknum in used_blocks:
+            exitcode = 2
+            print("ALLOCATED BLOCK {} ON FREELIST".format(blocknum),file=sys.stdout)
+    #duplicate
+    for blocknum in range(first_valid_block,max_block):
+        if blocknum in used_blocks:
+            temp = used_blocks[blocknum]
+            if len(temp) > 1:
+                for i in range(len(temp)):
+                    exitcode = 2
+                    if temp[i][2] == 0:
+                        print("DUPLICATE BLOCK {} IN INODE {} AT OFFSET {}".format(blocknum,temp[i][0],temp[i][1]),file=sys.stdout)
+                    if temp[i][2] == 1:
+                        print("DUPLICATE INDIRECT BLOCK {} IN INODE {} AT OFFSET {}".format(blocknum,temp[i][0],temp[i][1]),file=sys.stdout)
+                    if temp[i][2] == 2:
+                        print("DUPLICATE DOUBLE INDIRECT BLOCK {} IN INODE {} AT OFFSET {}".format(blocknum,temp[i][0],temp[i][1]),file=sys.stdout)
+                    if temp[i][2] == 3:
+                        print("DUPLICATE TRIPLE INDIRECT BLOCK {} IN INODE {} AT OFFSET {}".format(blocknum,temp[i][0],temp[i][1]),file=sys.stdout)
+
+def Directory_Consistency_Audits(super_block,allocated_inode,inode_list,dirent_list):
+    links_dict = {}
+    parentof = {2:2}
+    for i in range(1, super_block.total_inodes+1):
+        links_dict[i] = 0
+    for dirent in dirent_list:
+        if dirent.name != "'.'" and dirent.name != "'..'" :
+            parentof[dirent.inode_num]=dirent.parent_inode_num
+        if dirent.inode_num < 1 or dirent.inode_num > super_block.total_inodes:
+            exitcode = 2
+            print("DIRECTORY INODE {} NAME {} INVALID INODE {}".format(dirent.parent_inode_num, dirent.name, dirent.inode_num))
+        elif dirent.inode_num not in allocated_inode:            print("DIRECTORY INODE {} NAME {} UNALLOCATED INODE {}".format(dirent.parent_inode_num, dirent.name, dirent.inode_num))
+        else:
+            links_dict[dirent.inode_num] += 1
+    for inode in inode_list:
+        if inode.inode_num in links_dict:
+            if inode.link_count != links_dict[inode.inode_num]:
+                exitcode = 2
+                print("INODE {} HAS {} LINKS BUT LINKCOUNT IS {}".format(inode.inode_num, links_dict[inode.inode_num], inode.link_count), file=sys.stdout)
+    for dirent in dirent_list:
+        if dirent.name == "'.'" and dirent.inode_num != dirent.parent_inode_num:
+            exitcode = 2
+            print("DIRECTORY INODE {} NAME '.' LINK TO INODE {} SHOULD BE {}" .format(dirent.parent_inode_num, dirent.inode_num, dirent.parent_inode_num))
+        if dirent.name == "'..'" and dirent.inode_num != parentof[dirent.parent_inode_num]:
+            exitcode = 2
+            print("DIRECTORY INODE {} NAME '..' LINK TO INODE {} SHOULD BE {}".format(dirent.parent_inode_num, dirent.inode_num, int(parentof[dirent.parent_inode_num])))
+
+
+def Inode_Allocation_Audits(super_block,inode_list, ifree_list,dirent_list):
+
+    allocated_inode=[]
+    for inode in inode_list:
+        allocated_inode.append(inode.inode_num)
+        if inode.inode_num in ifree_list:
+            exitcode = 2
+            print("ALLOCATED INODE {} ON FREELIST".format(inode.inode_num), file=sys.stdout)
+    for num in range(super_block.first_nonreserved_inode, super_block.total_inodes):
+        if num not in allocated_inode and num not in ifree_list:
+            exitcode = 2
+            print("UNALLOCATED INODE {} NOT ON FREELIST".format(num), file=sys.stdout)
+    Directory_Consistency_Audits(super_block,allocated_inode,inode_list,dirent_list)
+
+def main ():
+    if len(sys.argv) != 2:
+        print("Error: Invalid number of arguments: two arguments are needed\n", file=sys.stderr)
+        exit(1)
+    try:
+        csvfile = open(sys.argv[1], 'r')
+    except IOError:
+        print("Error: Cannot open the csv file.\n", file=sys.stderr)
+        exit(1)
+    super_block = None
+    group = None
+    bfree_list = []
+    ifree_list = []
+    inode_list = []
+    indirect_list = []
+    dirent_list = []
+    used_blocks = {}
+    #read and store datas to lists
+    lines=csv.reader(csvfile)
+    for fields in lines:
+        if fields[0] == "SUPERBLOCK":
+            super_block = Superblock(fields)
+        elif fields[0] == "GROUP":
+            group = Group(fields)
+        elif fields[0] == "BFREE":
+            bfree_list.append(int(fields[1]))
+            #print(bfree_list)
+        elif fields[0] == "IFREE":
+            ifree_list.append(int(fields[1]))
+        elif fields[0] == "INODE":
+            inode_list.append(Inode(fields))
+        elif fields[0] == "DIRENT":
+            dirent_list.append(Dirent(fields))
+        elif fields[0] == "INDIRECT":
+            indirect_list.append(Indirect(fields))
+        else:
+            print("Error: the input csv file contains invild element. \n")
+            exit(1)
+    Block_Consistency_Audits(super_block,group,inode_list,indirect_list, bfree_list, used_blocks)
+    Inode_Allocation_Audits(super_block,inode_list,ifree_list,dirent_list)
+    exit(exitcode)
+if __name__ == '__main__':
+    main()
+            

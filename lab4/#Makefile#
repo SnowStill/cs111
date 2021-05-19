@@ -1,0 +1,15 @@
+# NAME: Qinglin Zhang
+# EMAIL: qqinglin0327@gmail.com
+# ID:205356739
+CFLAGS=-Wall -Wextra
+
+default:
+	chmod 777 compile.sh
+	./compile.sh
+clean:
+	rm -f lab4c-205356739.tar.gz  lab4b
+check: default
+	chmod 777 test.sh
+	./test.sh
+dist: check
+	tar -czvf lab4c-205356739Z.tar.gz lab4c_tsl.c lab4c_tcp.c Makefile README compile.sh

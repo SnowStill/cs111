@@ -1,0 +1,8 @@
+NAME: Qinglin Zhang
+EMAIL: qqinglin0327@gmail.com
+ID: 205356739
+
+lab4c_tcp.c: the c source file that prints the temperature based on given commands to the server via TCP connection
+lab4c_tls.c: the c source file that prints the temperature based on given commands to the server via SSL connection
+Makefile: a makefile that builds and tars the neccessary files and clean all the temperary files
+README: a readme file

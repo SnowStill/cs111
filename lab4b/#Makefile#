@@ -1,0 +1,4 @@
+#t.sh
+        ./test.sh
+dist:
+        tar -czvf lab4b-205356739.tar.gz lab4b.c Makefile README tester.sh

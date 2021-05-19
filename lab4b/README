@@ -1,0 +1,35 @@
+NAME: Qinglin Zhang
+EMAIL: qqinglin0327@gmail.com
+ID:205356739
+
+lab4b.c:
+    The source code that prints the time and temperature of the beaglebone based on the given period. User is able to use option --scale to change the unit of temperature.
+If log option is specifeid, it will record the result to the given file. It takes following commands: 
+   SCALE=F-change the temperature unit to Fahrenheit
+   SCALE=C-change the temperature unit to Centegrade
+   PERIOD=seconds change the period for each time it reports
+   STOP= pause the program
+   START= continue the program
+   LOG line of text = just log whatever it has
+   OFF= shutdown the program.
+
+
+README: The description of all the files
+
+tests.sh:
+    Smoke tests, which tests the basic function.
+
+compile.sh:
+    a compiling script to compile the code with DUMMY option if it is not on the baglebone. 
+Makefile:
+    The makefile for compiling, testing, and compressing.
+
+
+Reference:
+https://www.tutorialspoint.com/c_standard_library/c_function_fopen.htm fopn() function
+https://iotdk.intel.com/docs/master/mraa/ all the mraa funcions and their arguments for creating the dummy function
+https://www.tutorialspoint.com/c_standard_library/c_function_localtime.htm underdtanding the loclatime
+https://linux.die.net/man/3/clock_gettime understanding clock_gettime
+https://www.tutorialspoint.com/c_standard_library/c_function_strstr.htm strstr, to see what does it return
+https://unix.stackexchange.com/questions/48535/can-grep-return-true-false-or-are-there-alternative-methods for how to grep in shell
+https://en.cppreference.com/w/cpp/language/typedef typedef

@@ -1,0 +1,43 @@
+# NAME: Qinglin Zhang
+# EMAIL: qqinglin0327@gmail.com
+# ID:205356739
+
+Question 2.1.1 - causing conflicts
+	 The race condiotion is less likely to happen with less iteration since it takes 
+	 a shoreter time to finsih the task. If it is short enogh, the cpu can finish 
+	 quickly before the next process coming up.  If one task is long enough, 
+	 it may causes some overlaps with other threads. Thus smaller number of iterations so seldom fail.
+
+Question 2.1.2
+	 Yiled runs slower since it costs significant time to interrpt the ongoing threads and switch to a new thread by calling the system call. 
+	 So most of them was wasted from the swiching.
+	 It is not possible to get valid per-operation timings since multiple threads and yields are going on. The time becopmes unpredicable.
+QUESTION 2.1.3 - measurement errors
+	 The resource is limited. As a result of increasing number of iterations, much more time is used to do the calculation instead of creating new processes.
+	 The time was used to create new threads are now used to run more iterations, so the average cost per operation gets lower as we divide the number of process.
+	 To get the correct cost, we need to run a very high number of iterators, which makes the resource that threads takes becomes as less as possible 
+
+QUESTION 2.1.4 - costs of serialization:
+	 Lower number of threads means lower chance the conflicts are likely to happen. The locks are not used much, so there woldn't be many difference.
+	 Higher number of threas means higher chance the conflicts are likely to happen. There can be numerous threads sharing the one source, so it means more ofeten the threads
+	 need to wait for the unlock.
+
+QUESTION 2.2.1 - scalability of Mutex
+	 The curve in List-4 is more like a line with a constant slope. More Threads have higher CPO 
+	 On the other hand, the curve in Add 5 is like a Exponential function. As the number of threads increase, the 
+	 slower the cost per operations grows. Also CAS is going to catch up the mutex CPO at arount 16 threads.
+	 	 
+	
+QUESTION 2.2.2 - scalability of spin locks
+
+
+
+
+Reference:
+
+https://stackoverflow.com/questions/3477292/what-do-and-do-as-prefixes-to-recipe-lines-in-make using - on the makefile in order to let the makefile keep going
+
+https://piazza.com/class/kbpjf32wbol4kc?cid=191 
+
+https://stackoverflow.com/questions/822323/how-to-generate-a-random-int-in-c#:~:text=The%20rand()%20function%20in,seed)%20to%20set%20a%20seed. srand()
+

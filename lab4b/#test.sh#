@@ -1,0 +1,37 @@
+#!/bin/sh  
+
+./lab4b --period=2 --scale=C --log="LOGFILE" <<EOF
+-EOF
+SCALE=F
+PERIOD=1
+START
+STOP
+LOG test
+OFF
+EOF
+ret=$?
+if [ $ret -ne 0 ]
+then
+        echo "RETURNS RC=$ret"
+        let errors+=1
+fi
+
+if [ ! -s LOGFILE ]
+then
+        echo "did not create a log file"
+else
+        echo "... $PGM supports and logs all sensor commands"
+        for c in SCALE=F PERIOD=1 START STOP OFF SHUTDOWN "LOG test"
+        do
+                grep "$c" LOGFILE > /dev/null
+                if [ $? -ne 0 ]
+                then
+                        echo "DID NOT LOG $c command"
+                    
+                else
+                        echo "    $c ... RECOGNIZED AND LOGGED"
+                fi
+        done
+fi
+EOF
+rm LOGFILE

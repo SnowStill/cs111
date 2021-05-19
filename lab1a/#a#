@@ -1,0 +1,155 @@
+/e(pipe_st[0]);
+      if(start_exiting == 1){
+      		       if(waitpid(pid, &child_status, 0) < 0){
+		       		         fprintf(stderr, "Error: Problem with child process.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+					 		   exit(1);
+								}
+									fprintf(stderr,"SHELL EXIT SIGNAL=%d STATUS=%d ", WIFSIGNALED(child_status), WEXITSTATUS(child_status));
+											      exit(1);
+											            }
+												        }
+													  }
+													    else{
+													        read_input_k_to_b();
+														  }
+														    exit(0);
+														    }
+
+
+														    void set_to_nc_input(){
+														      int grabbedAttributes = tcgetattr(0, &save_beginning);
+														        if(grabbedAttributes < 0){
+															    fprintf(stderr, "Error: Could not grab attributes.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+															        exit(1);
+																  }
+																    atexit(reset_input_mode);
+																      struct termios copy_att;
+																        tcgetattr(0, &copy_att); //grabs and copies attributes from file descriptor into copy_att
+																	  copy_att.c_iflag = ISTRIP;
+																	    copy_att.c_oflag = 0;
+																	      copy_att.c_lflag = 0;
+																	        int setting_changes = tcsetattr(0, TCSANOW, &copy_att);
+																		  if(setting_changes < 0){
+																		      fprintf(stderr, "Error: Could not change attributes.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																		          exit(1);
+																			    }
+																			    }
+
+																			    void reset_input_mode(){
+																			      if(tcsetattr(STDIN_FILENO, TCSANOW, &save_beginning) < 0){
+																			          fprintf(stderr, "Error: Could not restore original terminal attributes.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																				      exit(1);
+																				        }
+																					}
+
+																					void read_input_k_to_b(){ //reading input from keyboard to buffer
+																					  char curr_buf[16];
+																					    char CRLF[2] = {'\r','\n'};
+																					      char curr_char;
+																					        ssize_t readable;
+																						  int i = 0;
+																						    while((readable = read(0, &curr_buf, 16)) > 0){
+																						        i = 0;
+																							    while(i < readable){
+																							          curr_char = curr_buf[i];
+																								        switch(curr_char){
+																									      case '\r':
+																									            case '\n':
+																										    	 if((write(0, &CRLF, 2)) < 0){
+																											 	        fprintf(stderr, "Error: Could not write from CRLF to stdin.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																															  exit(1);
+																															   }
+																															    break;
+																															          case 0x04:
+																																       exit(0);
+																																        break;
+																																	      default:
+																																	       if((write(0, &curr_char, 1)) < 0){
+																																	       		      fprintf(stderr, "Error: Could not write from curr_buf to stdin.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																																			      		        exit(1);
+																																						 }
+																																						  break;
+																																						        }
+																																							      i++;
+																																							          }
+																																								    }
+																																								    }
+
+																																								    void sig_handler(int sig){
+																																								      if(sig == SIGPIPE){
+																																								          fprintf(stderr,"Recieved a SIGPIPE. Getting ready to shut-down.");
+																																									      exit(0);
+																																									          //some additional stuff here
+																																										    }
+																																										    }
+
+																																										    void read_input_kb(){ //reading input from keyboard
+																																										      char curr_buff[256];
+																																										        char curr_char;
+																																											  ssize_t readable;
+																																											    char CRLF[2] = {'\r','\n'};
+																																											      readable = read(0, &curr_buff, 256);
+																																											        int i = 0;
+																																												  while(i < readable){
+																																												      curr_char = curr_buff[i];
+																																												          switch(curr_char){
+																																													      case '\r':
+																																													          case '\n':
+																																														        if((write(1, &CRLF[0], 1)) < 0){
+																																																     fprintf(stderr, "Error: Could not echo CR to stdout.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																																																     		     exit(1);
+																																																		           }
+																																																			         if((write(1, &CRLF[1], 1)) < 0){
+																																																				 	      fprintf(stderr, "Error: Could not echo LF to stdout.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																																																					      		      exit(1);
+																																																							            }
+																																																								          if((write(pipe_ts[1], &CRLF[1], 1)) < 0){
+																																																									  			fprintf(stderr, "Error: Could not forward LF to shell.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																																																														exit(1);
+																																																														      }
+																																																														            break;
+																																																															        case 0x04:
+																																																																      close(pipe_ts[1]); //stop writing after you get to the end, so you would want to close the pipe
+																																																																            break;
+																																																																	        case 0x03:
+																																																																		      kill(pid,SIGINT);
+																																																																		            break;
+																																																																			        default:
+																																																																				      if((write(1, &curr_char, 1)) < 0){
+																																																																				      		   fprintf(stderr, "Error: Could not echo input to stdout.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																																																																						   		   exit(1);
+																																																																								         }
+																																																																									       if((write(pipe_ts[1], &curr_char, 1)) < 0){
+																																																																									       			     fprintf(stderr, "Error: Could not forward input to shell.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																																																																												     		     exit(1);
+																																																																														           }
+																																																																															         break;
+																																																																																     }
+																																																																																         i++;
+																																																																																	   }
+																																																																																	   }
+
+																																																																																	   void read_input_shell(){ //reading input from shell
+																																																																																	     char curr_buff[256];
+																																																																																	       char curr_char;
+																																																																																	         ssize_t readable;
+																																																																																		   char CRLF[2] = {'\r','\n'};
+																																																																																		     readable = read(pipe_st[0], &curr_buff, 256);
+																																																																																		       int i = 0;
+																																																																																		         while(i < readable){
+																																																																																			     curr_char = curr_buff[i];
+																																																																																			         if(curr_char == '\n'){
+																																																																																				       if((write(1, &CRLF, 2)) < 0){
+																																																																																				       		    fprintf(stderr, "Error: Could not echo CRLF to stdout.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																																																																																						    		    exit(1);
+																																																																																								          }
+																																																																																									      }
+																																																																																									          else{
+																																																																																										        if((write(1, &curr_char, 1)) < 0){
+																																																																																												     fprintf(stderr, "Error: Could not write from shell to stdout.\nMessage: %s\nExiting with error number: %d\n", strerror(errno), errno);
+																																																																																												     		     exit(1);
+																																																																																														           }
+																																																																																															       }
+																																																																																															           i++;
+																																																																																																     }
+																																																																																																     }

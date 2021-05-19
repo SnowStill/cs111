@@ -1,0 +1,213 @@
+//# NAME: Qinglin ZHang
+//# EMAIL: qqinglin0327@gmail.com
+//# ID: 205356739
+
+#include <stdio.h>
+#include <unistd.h>
+#include <getopt.h>
+#include <string.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <time.h>
+#include <errno.h>
+
+int num_threads=1;
+int num_iterations = 1;
+int opt_yield = 0;
+int opt_sync = 0;
+long long counter = 0;
+pthread_mutex_t mutex;
+int locktype = 0;
+char* name_tag = "add-none";
+int spin_lock = 0;
+void add(long long *pointer, long long value) {
+  long long sum = *pointer + value;
+  if (opt_yield)
+    sched_yield();
+  *pointer = sum;
+}
+
+void* add_sub(){
+  long long i;  
+  for (i = 0; i < num_iterations; i++){
+    if(locktype == 0)
+      add(&counter, 1);
+    //mutex
+    else if(locktype == 1){
+      if(pthread_mutex_lock(&mutex) != 0){
+	fprintf(stderr, "Faile to lock: %s \n", strerror(errno));
+	exit(1);
+      }
+      add(&counter, 1);
+      if(pthread_mutex_unlock(&mutex) != 0){
+	fprintf(stderr, "Faile to unlock: %s \n", strerror(errno));
+	exit(1);
+      }
+    }
+    //spin_lock
+    else if(locktype == 2){
+      while (__sync_lock_test_and_set(&spin_lock, 1));
+      add(&counter, 1);
+      __sync_lock_release(&spin_lock);
+    }
+    //compare swap
+    else if(locktype == 3){
+      long long old, new;
+      do{
+	old = counter;
+	new = old + 1;
+	if(opt_yield){
+	  sched_yield();
+	}
+      } while(__sync_val_compare_and_swap(&counter, old, new) != old);
+    }
+  }
+  for (i = 0; i < num_iterations; i++){
+    if(locktype == 0){
+      add(&counter, -1);
+    }
+    //mutex
+    else if(locktype == 1){
+      if(pthread_mutex_lock(&mutex) != 0){
+	fprintf(stderr, "Faile to lock: %s \n", strerror(errno));
+	exit(1);
+      }
+      add(&counter, -1);
+      if(pthread_mutex_unlock(&mutex) != 0){
+	fprintf(stderr, "Faile to unlock: %s \n", strerror(errno));
+	exit(1);
+      }
+    }
+    //spin_lock
+    else if(locktype == 2){
+      while (__sync_lock_test_and_set(&spin_lock, 1));
+      add(&counter, -1);
+      __sync_lock_release(&spin_lock);
+    }
+    //compare swap
+    else if(locktype == 3){
+      long long old, new;
+      do{
+	old = counter;
+	new = old - 1;
+	if(opt_yield){
+	  sched_yield();
+	}
+      } while(__sync_val_compare_and_swap(&counter, old, new) != old);
+    }
+  }
+  return NULL;
+}
+
+void get_name(){
+  if(opt_yield){
+    if(locktype == 0)
+      name_tag = "add-yield-none";
+    else if(locktype == 1)
+      name_tag = "add-yield-m";
+    else if(locktype == 2)
+      name_tag = "add-yield-s";
+    else if(locktype == 3)
+      name_tag = "add-yield-c";
+  }
+  else{
+    if(locktype == 0)
+      name_tag = "add-none";
+    else if(locktype == 1)
+      name_tag = "add-m";
+    else if(locktype == 2)
+      name_tag = "add-s";
+    else if(locktype == 3)
+      name_tag = "add-c";
+    
+  }
+}
+int main(int argc, char* argv[]){
+  struct option options[] = {
+    {"threads",1, NULL, 't'},
+    {"iterations",1, NULL, 'i'},
+    {"yield",0, NULL, 'y'},
+    {"sync",1, NULL, 's'},
+    {0, 0, 0, 0}
+  };
+  int opt;
+  while(1){
+    opt = getopt_long(argc, argv, "", options, 0);
+    if(opt == -1)
+      break;
+    else if (opt == '?'){
+
+      fprintf(stderr, "Arguments Error\n");
+      exit(1); //1 ... unrecognized argument
+    }
+    else if (opt == 't'){
+      num_threads = atoi(optarg);
+    }
+    else if(opt == 'i'){
+      num_iterations = atoi(optarg);
+    }
+    else if(opt == 'y'){
+      opt_yield =1;
+    }
+    else if(opt == 's'){
+      switch (optarg[0]){
+      case 'm':
+	locktype = 1; //mutex
+	if (pthread_mutex_init(&mutex, NULL) != 0){
+	  fprintf(stderr, "Failed to create mutex: %s\n", strerror(errno));
+	  exit(1);
+	}
+	break;
+      case 's':
+	locktype = 2; //spin lock
+	break;
+      case 'c':
+	locktype = 3; //compare and swap
+	break;
+      default:
+	fprintf(stderr, "Invalid sync argument.\n");
+	exit(1);
+      }
+    }
+    else{
+      fprintf(stderr, "Arguments Error\n");
+      exit(1);
+    }
+  }
+  //get the start time
+  struct timespec start_time;
+  struct timespec end_time;
+  clock_gettime(CLOCK_MONOTONIC, &start_time);
+  //create threads
+  pthread_t threadslist[num_threads];
+  int i;
+  for (i = 0; i < num_threads; i++)
+    {
+      if (pthread_create(&threadslist[i], NULL, add_sub, NULL) != 0){
+	fprintf(stderr, "Failed to creat threads: %s\n", strerror(errno));
+	exit(1);
+      }
+    }
+  //wait threads to join back
+  for (i = 0; i < num_threads; i++)
+    {
+      if (pthread_join(threadslist[i], NULL) != 0){
+	fprintf(stderr, "Failed to join threads: %s\n", strerror(errno));
+	exit(1);
+      }
+    }
+  //get the end time
+  clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+  //get the number of operations
+  long long num_operations = num_iterations * num_threads * 2;
+  //get the time
+  long long runtime = (end_time.tv_sec - start_time.tv_sec) * 1000000000 +
+    (end_time.tv_nsec - start_time.tv_nsec);
+  long long time_per_operation = runtime/num_operations;
+  //get the name
+  get_name();
+  //print
+  printf("%s,%d,%d,%lld,%lld,%lld,%lld\n", name_tag, num_threads, num_iterations, num_operations, runtime, time_per_operation, counter);
+  return 0;
+}

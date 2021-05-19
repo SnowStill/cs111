@@ -1,0 +1,327 @@
+Total: 405 samples
+     326  80.5%  80.5%      405 100.0% task
+      16   4.0%  84.4%       36   8.9% SortedList_insert
+       8   2.0%  86.4%        8   2.0% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:161
+       8   2.0%  88.4%        8   2.0% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:204
+       8   2.0%  90.4%        8   2.0% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1734
+       8   2.0%  92.3%       43  10.6% SortedList_lookup
+       6   1.5%  93.8%        6   1.5% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1734
+       5   1.2%  95.1%        5   1.2% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1734
+       3   0.7%  95.8%        3   0.7% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:203
+       3   0.7%  96.5%        3   0.7% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:206
+       3   0.7%  97.3%        3   0.7% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:211
+       3   0.7%  98.0%        3   0.7% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1734
+       2   0.5%  98.5%        2   0.5% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:164
+       2   0.5%  99.0%        2   0.5% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:212
+       2   0.5%  99.5%        2   0.5% ?? /usr/src/debug////////glibc-2.17-c758a686/string/../sysdeps/x86_64/multiarch/strcmp-sse42.S:1733
+       2   0.5% 100.0%        2   0.5% _init
+       0   0.0% 100.0%      405 100.0% ?? /usr/src/debug////////glibc-2.17-c758a686/misc/../sysdeps/unix/sysv/linux/x86_64/clone.S:118
+       0   0.0% 100.0%      405 100.0% start_thread
+ROUTINE ====================== task in /u/cs/ugrad/qinglin/cs111/lab2b/lab2_list.c
+   326    405 Total samples (flat / cumulative)
+     .      .   98:     else if(locktype == 2)
+     .      .   99:       name_tag = "list-idl-s";
+     .      .  100:   }
+     .      .  101: }
+     .      .  102: 
+---
+     .      .  103: void* task(void* ptr){
+     .      .  104:   SortedListElement_t* subarray = ptr;
+     .      .  105:   int i;
+     .      .  106:   struct timespec lock_start;
+     .      .  107:   struct timespec lock_end;
+     .      .  108:   //insert
+     .      .  109:   for(i=0;i < num_iterations;i++){
+     .      .  110:     //default
+     .      .  111:     if(locktype == 0){
+     .      .  112:       SortedList_insert(list, (SortedListElement_t *)subarray+i);
+     .      .  113:     }
+     .      .  114:     //mutex
+     .      .  115:     else if(locktype == 1){
+     .      .  116:       clock_gettime(CLOCK_MONOTONIC, &lock_start);
+     .      .  117:       if(pthread_mutex_lock(&mutex) != 0){
+     .      .  118:         fprintf(stderr, "Failed to lock: %s \n", strerror(errno));
+     .      .  119: 	exit(1);
+     .      .  120:       }
+     .      .  121:       clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  122:       lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  123: 	(lock_end.tv_nsec - lock_start.tv_nsec);
+     .      .  124:       SortedList_insert(list, (SortedListElement_t *)subarray+i);
+     .      .  125:       if(pthread_mutex_unlock(&mutex) != 0){
+     .      .  126:         fprintf(stderr, "Failed to unlock: %s \n", strerror(errno));
+     .      .  127: 	exit(1);
+     .      .  128:       }
+     .      .  129:     }
+     .      .  130:     //spin
+     .      .  131:     else if(locktype ==2){
+     .      .  132:       clock_gettime(CLOCK_MONOTONIC, &lock_start);
+   225    225  133:       while (__sync_lock_test_and_set(&spin_lock, 1));
+     .      .  134:       clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  135:       lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  136:         (lock_end.tv_nsec - lock_start.tv_nsec);
+     .     36  137:       SortedList_insert(list, (SortedListElement_t *)subarray+i);
+     .      .  138:       __sync_lock_release(&spin_lock);
+     .      .  139:     }
+     .      .  140:   }
+     .      .  141:   
+     .      .  142:   //get length
+     .      .  143:   int length = 0;
+     .      .  144:   if(locktype == 0){
+     .      .  145:     length = SortedList_length(list);
+     .      .  146:     if (length == -1){
+     .      .  147:       fprintf(stderr, "Invalid length.\n");
+     .      .  148:       exit(2);
+     .      .  149:     }
+     .      .  150:   }
+     .      .  151:   else if(locktype == 1){
+     .      .  152:     clock_gettime(CLOCK_MONOTONIC, &lock_start);
+     .      .  153:     if(pthread_mutex_lock(&mutex) != 0){
+     .      .  154:       fprintf(stderr, "Failed to lock: %s \n", strerror(errno));
+     .      .  155:       exit(1);
+     .      .  156:     }
+     .      .  157:     clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  158:     lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  159:       (lock_end.tv_nsec - lock_start.tv_nsec);
+     .      .  160:     length = SortedList_length(list);
+     .      .  161:     if (length == -1){
+     .      .  162:       fprintf(stderr, "Invalid length.\n");
+     .      .  163:       exit(2);
+     .      .  164:     }
+     .      .  165:     if(pthread_mutex_unlock(&mutex) != 0){
+     .      .  166:       fprintf(stderr, "Failed to unlock: %s \n", strerror(errno));
+     .      .  167:       exit(1);
+     .      .  168:     }
+     .      .  169:   }
+     .      .  170:   else if(locktype ==2){
+     .      .  171:     clock_gettime(CLOCK_MONOTONIC, &lock_start);
+     1      1  172:     while (__sync_lock_test_and_set(&spin_lock, 1));
+     .      .  173:     clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  174:     lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  175:       (lock_end.tv_nsec - lock_start.tv_nsec);
+     .      .  176:     length = SortedList_length(list);
+     .      .  177:     if (length == -1){
+     .      .  178:       fprintf(stderr, "Invalid length.\n");
+     .      .  179:       exit(2);
+     .      .  180:     }
+     .      .  181:     __sync_lock_release(&spin_lock);
+     .      .  182:   }
+     .      .  183:   //delete
+     .      .  184:   SortedListElement_t *temp;
+     .      .  185:   for(i=0;i < num_iterations;i++){
+     .      .  186:     //default
+     .      .  187:     if(locktype == 0){
+     .      .  188:       temp = SortedList_lookup(list, (subarray+i)->key);
+     .      .  189:       if(temp == NULL){
+     .      .  190: 	fprintf(stderr, "Failed to look up element. \n");
+     .      .  191: 	exit(2);
+     .      .  192:       };
+     .      .  193:       if(SortedList_delete(temp)!=0){
+     .      .  194: 	fprintf(stderr, "Failed to delete element. \n");
+     .      .  195: 	exit(2);
+     .      .  196:       }
+     .      .  197:     }
+     .      .  198:     //mutex
+     .      .  199:     else if(locktype == 1){
+     .      .  200:       clock_gettime(CLOCK_MONOTONIC, &lock_start);
+     .      .  201:       if(pthread_mutex_lock(&mutex) != 0){
+     .      .  202:         fprintf(stderr, "Failed to lock: %s \n", strerror(errno));
+     .      .  203:         exit(1);
+     .      .  204:       }
+     .      .  205:       clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  206:       lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  207:         (lock_end.tv_nsec - lock_start.tv_nsec);
+     .      .  208:       temp = SortedList_lookup(list, (subarray+i)->key);
+     .      .  209:       if(temp == NULL){
+     .      .  210:         fprintf(stderr, "Failed to look up element. \n");
+     .      .  211:         exit(2);
+     .      .  212:       };
+     .      .  213:       if(SortedList_delete(temp)!=0){
+     .      .  214:         fprintf(stderr, "Failed to delete element. \n");
+     .      .  215:         exit(2);
+     .      .  216:       }
+     .      .  217:       if(pthread_mutex_unlock(&mutex) != 0){
+     .      .  218:         fprintf(stderr, "Failed to lock: %s \n", strerror(errno));
+     .      .  219:         exit(1);
+     .      .  220:       }
+     .      .  221:     }
+     .      .  222:     //spin
+     .      .  223:     else if(locktype ==2){
+     .      .  224:       clock_gettime(CLOCK_MONOTONIC, &lock_start);
+   100    100  225:       while (__sync_lock_test_and_set(&spin_lock, 1));
+     .      .  226:       clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  227:       lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  228:         (lock_end.tv_nsec - lock_start.tv_nsec);
+     .     43  229:       temp = SortedList_lookup(list, (subarray+i)->key);
+     .      .  230:       if(temp == NULL){
+     .      .  231:         fprintf(stderr, "Failed to look up element. \n");
+     .      .  232:         exit(2);
+     .      .  233:       };
+     .      .  234:       if(SortedList_delete(temp)!=0){
+     .      .  235:         fprintf(stderr, "Failed to delete element. \n");
+     .      .  236:         exit(2);
+     .      .  237:       }
+     .      .  238:       __sync_lock_release(&spin_lock);
+     .      .  239:     }
+     .      .  240:   }
+     .      .  241:   return NULL;
+     .      .  242: }
+---
+     .      .  243: 
+     .      .  244: 
+     .      .  245: int main(int argc, char* argv[]) {
+     .      .  246:   struct option options[] = {
+     .      .  247:     {"threads",1, NULL, 't'},
+ROUTINE ====================== task in /u/cs/ugrad/qinglin/cs111/lab2b/lab2_list.c
+   326    405 Total samples (flat / cumulative)
+     .      .   98:     else if(locktype == 2)
+     .      .   99:       name_tag = "list-idl-s";
+     .      .  100:   }
+     .      .  101: }
+     .      .  102: 
+---
+     .      .  103: void* task(void* ptr){
+     .      .  104:   SortedListElement_t* subarray = ptr;
+     .      .  105:   int i;
+     .      .  106:   struct timespec lock_start;
+     .      .  107:   struct timespec lock_end;
+     .      .  108:   //insert
+     .      .  109:   for(i=0;i < num_iterations;i++){
+     .      .  110:     //default
+     .      .  111:     if(locktype == 0){
+     .      .  112:       SortedList_insert(list, (SortedListElement_t *)subarray+i);
+     .      .  113:     }
+     .      .  114:     //mutex
+     .      .  115:     else if(locktype == 1){
+     .      .  116:       clock_gettime(CLOCK_MONOTONIC, &lock_start);
+     .      .  117:       if(pthread_mutex_lock(&mutex) != 0){
+     .      .  118:         fprintf(stderr, "Failed to lock: %s \n", strerror(errno));
+     .      .  119: 	exit(1);
+     .      .  120:       }
+     .      .  121:       clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  122:       lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  123: 	(lock_end.tv_nsec - lock_start.tv_nsec);
+     .      .  124:       SortedList_insert(list, (SortedListElement_t *)subarray+i);
+     .      .  125:       if(pthread_mutex_unlock(&mutex) != 0){
+     .      .  126:         fprintf(stderr, "Failed to unlock: %s \n", strerror(errno));
+     .      .  127: 	exit(1);
+     .      .  128:       }
+     .      .  129:     }
+     .      .  130:     //spin
+     .      .  131:     else if(locktype ==2){
+     .      .  132:       clock_gettime(CLOCK_MONOTONIC, &lock_start);
+   225    225  133:       while (__sync_lock_test_and_set(&spin_lock, 1));
+     .      .  134:       clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  135:       lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  136:         (lock_end.tv_nsec - lock_start.tv_nsec);
+     .     36  137:       SortedList_insert(list, (SortedListElement_t *)subarray+i);
+     .      .  138:       __sync_lock_release(&spin_lock);
+     .      .  139:     }
+     .      .  140:   }
+     .      .  141:   
+     .      .  142:   //get length
+     .      .  143:   int length = 0;
+     .      .  144:   if(locktype == 0){
+     .      .  145:     length = SortedList_length(list);
+     .      .  146:     if (length == -1){
+     .      .  147:       fprintf(stderr, "Invalid length.\n");
+     .      .  148:       exit(2);
+     .      .  149:     }
+     .      .  150:   }
+     .      .  151:   else if(locktype == 1){
+     .      .  152:     clock_gettime(CLOCK_MONOTONIC, &lock_start);
+     .      .  153:     if(pthread_mutex_lock(&mutex) != 0){
+     .      .  154:       fprintf(stderr, "Failed to lock: %s \n", strerror(errno));
+     .      .  155:       exit(1);
+     .      .  156:     }
+     .      .  157:     clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  158:     lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  159:       (lock_end.tv_nsec - lock_start.tv_nsec);
+     .      .  160:     length = SortedList_length(list);
+     .      .  161:     if (length == -1){
+     .      .  162:       fprintf(stderr, "Invalid length.\n");
+     .      .  163:       exit(2);
+     .      .  164:     }
+     .      .  165:     if(pthread_mutex_unlock(&mutex) != 0){
+     .      .  166:       fprintf(stderr, "Failed to unlock: %s \n", strerror(errno));
+     .      .  167:       exit(1);
+     .      .  168:     }
+     .      .  169:   }
+     .      .  170:   else if(locktype ==2){
+     .      .  171:     clock_gettime(CLOCK_MONOTONIC, &lock_start);
+     1      1  172:     while (__sync_lock_test_and_set(&spin_lock, 1));
+     .      .  173:     clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  174:     lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  175:       (lock_end.tv_nsec - lock_start.tv_nsec);
+     .      .  176:     length = SortedList_length(list);
+     .      .  177:     if (length == -1){
+     .      .  178:       fprintf(stderr, "Invalid length.\n");
+     .      .  179:       exit(2);
+     .      .  180:     }
+     .      .  181:     __sync_lock_release(&spin_lock);
+     .      .  182:   }
+     .      .  183:   //delete
+     .      .  184:   SortedListElement_t *temp;
+     .      .  185:   for(i=0;i < num_iterations;i++){
+     .      .  186:     //default
+     .      .  187:     if(locktype == 0){
+     .      .  188:       temp = SortedList_lookup(list, (subarray+i)->key);
+     .      .  189:       if(temp == NULL){
+     .      .  190: 	fprintf(stderr, "Failed to look up element. \n");
+     .      .  191: 	exit(2);
+     .      .  192:       };
+     .      .  193:       if(SortedList_delete(temp)!=0){
+     .      .  194: 	fprintf(stderr, "Failed to delete element. \n");
+     .      .  195: 	exit(2);
+     .      .  196:       }
+     .      .  197:     }
+     .      .  198:     //mutex
+     .      .  199:     else if(locktype == 1){
+     .      .  200:       clock_gettime(CLOCK_MONOTONIC, &lock_start);
+     .      .  201:       if(pthread_mutex_lock(&mutex) != 0){
+     .      .  202:         fprintf(stderr, "Failed to lock: %s \n", strerror(errno));
+     .      .  203:         exit(1);
+     .      .  204:       }
+     .      .  205:       clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  206:       lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  207:         (lock_end.tv_nsec - lock_start.tv_nsec);
+     .      .  208:       temp = SortedList_lookup(list, (subarray+i)->key);
+     .      .  209:       if(temp == NULL){
+     .      .  210:         fprintf(stderr, "Failed to look up element. \n");
+     .      .  211:         exit(2);
+     .      .  212:       };
+     .      .  213:       if(SortedList_delete(temp)!=0){
+     .      .  214:         fprintf(stderr, "Failed to delete element. \n");
+     .      .  215:         exit(2);
+     .      .  216:       }
+     .      .  217:       if(pthread_mutex_unlock(&mutex) != 0){
+     .      .  218:         fprintf(stderr, "Failed to lock: %s \n", strerror(errno));
+     .      .  219:         exit(1);
+     .      .  220:       }
+     .      .  221:     }
+     .      .  222:     //spin
+     .      .  223:     else if(locktype ==2){
+     .      .  224:       clock_gettime(CLOCK_MONOTONIC, &lock_start);
+   100    100  225:       while (__sync_lock_test_and_set(&spin_lock, 1));
+     .      .  226:       clock_gettime(CLOCK_MONOTONIC, &lock_end);
+     .      .  227:       lock_time += (lock_end.tv_sec - lock_start.tv_sec) * 1000000000 +
+     .      .  228:         (lock_end.tv_nsec - lock_start.tv_nsec);
+     .     43  229:       temp = SortedList_lookup(list, (subarray+i)->key);
+     .      .  230:       if(temp == NULL){
+     .      .  231:         fprintf(stderr, "Failed to look up element. \n");
+     .      .  232:         exit(2);
+     .      .  233:       };
+     .      .  234:       if(SortedList_delete(temp)!=0){
+     .      .  235:         fprintf(stderr, "Failed to delete element. \n");
+     .      .  236:         exit(2);
+     .      .  237:       }
+     .      .  238:       __sync_lock_release(&spin_lock);
+     .      .  239:     }
+     .      .  240:   }
+     .      .  241:   return NULL;
+     .      .  242: }
+---
+     .      .  243: 
+     .      .  244: 
+     .      .  245: int main(int argc, char* argv[]) {
+     .      .  246:   struct option options[] = {
+     .      .  247:     {"threads",1, NULL, 't'},
